@@ -20,9 +20,19 @@ const MilkScreen = () => {
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [timeOfDayOptions, setTimeOfDayOptions] = useState([]);
-  const [usageOptions, setUsageOptions] = useState([]);
+ /*  const [timeOfDayOptions, setTimeOfDayOptions] = useState([]);
+  const [usageOptions, setUsageOptions] = useState([]); */
+  const timeOfDayOptions = [
+    { label: 'Morning', value: 'morning' },
+    { label: 'Afternoon', value: 'afternoon' },
+    { label: 'Evening', value: 'evening' },
+  ];
 
+  const usageOptions = [
+    { label: 'Consumption', value: 'consumption' },
+    { label: 'Selling', value: 'selling' },
+    { label: 'Feeding Calves', value: 'feedingCalves' },
+  ];
  // ... The rest of your MilkScreen.js code ...
 
 const db = firebase.firestore();
@@ -37,6 +47,7 @@ const handleRecordMilk = () => {
 
   db.collection('milkProduction')
     .add({
+      userId: firebase.auth().currentUser.uid,
       timeOfDay,
       amount,
       date: date.toISOString(), // Convert date to ISO string format for Firestore
@@ -59,7 +70,9 @@ const handleRecordUsage = () => {
   // ... Your validation code ...
 
   db.collection('milkUsage')
+  
     .add({
+      userId: firebase.auth().currentUser.uid,
       usage,
       quantity,
     })
@@ -139,10 +152,16 @@ const handleGenerateStatements = () => {
           onChange={handleDateChange}
         />
       )}
-      <CustomDropdown
+      {/* <CustomDropdown
         label="Time of Day"
         value={timeOfDay}
         onValueChange={handleTimeOfDayChange}
+        items={timeOfDayOptions}
+      /> */}
+       <CustomDropdown
+        label="Time of Day"
+        value={timeOfDay}
+        onValueChange={setTimeOfDay}
         items={timeOfDayOptions}
       />
       <TextInput
@@ -155,10 +174,16 @@ const handleGenerateStatements = () => {
       <TouchableOpacity style={styles.recordButton} onPress={handleRecordMilk}>
         <Text style={styles.recordButtonText}>Record Milk</Text>
       </TouchableOpacity>
-      <CustomDropdown
+     {/*  <CustomDropdown
         label="Usage"
         value={usage}
         onValueChange={handleUsageChange}
+        items={usageOptions}
+      /> */}
+         <CustomDropdown
+        label="Usage"
+        value={usage}
+        onValueChange={setUsage}
         items={usageOptions}
       />
       <TextInput

@@ -41,7 +41,7 @@ const MainStackNavigator = () => {
       <Stack.Screen options={{ headerShown: false }} name="Milk" component={MilkScreen} />
       <Stack.Screen options={{ headerShown: false }} name="Sales" component={SalesScreen} />
       <Stack.Screen options={{ headerShown: false }} name="Expenses" component={ExpenseScreen} />
-       <Stack.Screen options={{ headerShown: false }} name="Notication" component={NotificationScreen} />
+       <Stack.Screen options={{ headerShown: false }} name="Notification" component={NotificationScreen} />
       <Stack.Screen options={{ headerShown: false }} name="SidebarDrawer" component={SidebarDrawer} />
      
     </Stack.Navigator>

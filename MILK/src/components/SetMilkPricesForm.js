@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert } from 'react-native';
-import firebase from './firebase'; // Replace with the path to your firebase.js file
+/* import '@react-native-firebase/database' */
+import firebase from '../components/firebase';
+import '@react-native-firebase/database';
+ // Replace with the path to your firebase.js file
 
 function SetMilkPricesForm() {
   const [price, setPrice] = useState('');

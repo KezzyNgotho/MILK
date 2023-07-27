@@ -14,7 +14,8 @@ import {
 // import Icon from 'react-native-vector-icons/FontAwesome';
 import {Picker} from '@react-native-picker/picker';
 import firebase from '../components/firebase';
-import 'firebase/firestore';
+/* import 'firebase/firestore'; */
+import '@react-native-firebase/firestore'
 import { useNavigation } from '@react-navigation/native';
 
 
@@ -42,7 +43,8 @@ const CattleScreen = () => {
   useEffect(() => {
     const fetchCattleData = async () => {
       try {
-        const snapshot = await db.collection('cattles').get();
+        const userId = firebase.auth().currentUser.uid;
+        const snapshot = await db.collection('cattles').where('userId', '==', userId).get();
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setCattleList(data);
         setOriginalList(data);
@@ -53,6 +55,7 @@ const CattleScreen = () => {
   
     fetchCattleData();
   }, []);
+  
   //new cattle
 
    const handleRegisterNewCattle = () => {
@@ -61,7 +64,8 @@ const CattleScreen = () => {
   const handleFormSubmit = async () => {
     const newCattleData = {
       ...newCattle,
-      isPregnant: newCattle.isPregnant ? 'Yes' : 'No', // Convert boolean to string
+      isPregnant: newCattle.isPregnant ? 'Yes' : 'No',
+      userId: firebase.auth().currentUser.uid, // Add the user's UID to the cattle data
     };
   
     try {

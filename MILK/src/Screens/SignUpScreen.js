@@ -12,6 +12,7 @@ KeyboardAvoidingView,
 import firebase from '../components/firebase'; // Replace with the path to your firebase.js file
 import { useNavigation } from '@react-navigation/native';
 
+import auth from'@react-native-firebase/auth'
 
 const SignUpScreen = ({ navigation }) => {
 const [farmName, setFarmName] = useState('');

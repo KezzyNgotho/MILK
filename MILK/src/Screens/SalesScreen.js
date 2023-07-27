@@ -8,7 +8,9 @@ ScrollView,
 TouchableOpacity,
 } from 'react-native';
 import firebase from '../components/firebase';
-import 'firebase/firestore';
+/* import 'firebase/firestore'; */
+import '@react-native-firebase/firestore'
+
 import { useNavigation } from '@react-navigation/native';
 
 

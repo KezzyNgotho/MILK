@@ -11,9 +11,11 @@ import {
 } from 'react-native';
 import DatePicker from '@react-native-community/datetimepicker';
 import firebase from '../components/firebase';
-import 'firebase/firestore';
+/* import 'firebase/firestore'; */
+import '@react-native-firebase/firestore'
 import Toast from 'react-native-toast-message';
 import { useNavigation } from '@react-navigation/native';
+import '@react-native-firebase/auth';
 
 const ExpenseScreen = () => {
   const navigation = useNavigation();
@@ -32,10 +34,17 @@ useEffect(() => {
 
 const fetchExpenses = async () => {
   try {
-    const snapshot = await db.collection('expenses').get();
-    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setExpenses(data);
+    const user = firebase.auth().currentUser;
+    if (user) {
+      const snapshot = await db
+        .collection('expenses')
+        .where('userId', '==', user.uid)
+        .get();
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setExpenses(data);
+    }
   } catch (error) {
+    // Handle error
     console.error('Error fetching expenses:', error);
     Toast.show({
       type: 'error',
@@ -44,6 +53,7 @@ const fetchExpenses = async () => {
     });
   }
 };
+
 
 
 /*
@@ -123,39 +133,42 @@ const fetchExpenses = async () => {
 //add expese  
 const handleAddExpense = () => {
   if (newExpense.description && newExpense.amount && newExpense.date) {
-    const expenseData = {
-      description: newExpense.description,
-      amount: newExpense.amount,
-      date: newExpense.date.toISOString(), // Convert date to ISO string format
-    };
+    const user = firebase.auth().currentUser;
+    if (user) {
+      const expenseData = {
+        description: newExpense.description,
+        amount: newExpense.amount,
+        date: newExpense.date.toISOString(),
+        userId: user.uid, // Associate the expense with the logged-in user's UID
+      };
 
-    // Send POST request to save the expense
-    db.collection('expenses')
-      .add(expenseData)
-      .then(docRef => {
-        // Handle successful response
-        const newExpense = { id: docRef.id, ...expenseData };
-        setExpenses([...expenses, newExpense]);
-        setNewExpense({ description: '', amount: '', date: new Date() }); // Reset date to default
+      db.collection('expenses')
+        .add(expenseData)
+        .then(docRef => {
+          // Handle successful response
+          const newExpense = { id: docRef.id, ...expenseData };
+          setExpenses([...expenses, newExpense]);
+          setNewExpense({ description: '', amount: '', date: new Date() });
 
-        // Show success notification
-        Toast.show({
-          type: 'success',
-          text1: 'Expense recorded',
-          position: 'bottom',
+          // Show success notification
+          Toast.show({
+            type: 'success',
+            text1: 'Expense recorded',
+            position: 'bottom',
+          });
+        })
+        .catch(error => {
+          // Handle error
+          console.error('Error saving expense:', error);
+          // Show error notification
+          Toast.show({
+            type: 'error',
+            text1: 'Error saving expense',
+            text2: 'Please try again',
+            position: 'bottom',
+          });
         });
-      })
-      .catch(error => {
-        // Handle error
-        console.error('Error saving expense:', error);
-        // Show error notification
-        Toast.show({
-          type: 'error',
-          text1: 'Error saving expense',
-          text2: 'Please try again',
-          position: 'bottom',
-        });
-      });
+    }
   } else {
     // Show error notification if any field is missing
     Toast.show({
@@ -166,6 +179,7 @@ const handleAddExpense = () => {
     });
   }
 };
+
 
 
   const handleGenerateStatement = () => {

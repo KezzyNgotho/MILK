@@ -11,10 +11,12 @@ import {
   Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import firebase from '../components/firebase';
-import 'firebase/firestore';
-import Toast from 'react-native-toast-message';
+
+
 import { useNavigation } from '@react-navigation/native';
+import firebase from '../components/firebase';
+import '@react-native-firebase/firestore';
+import Toast from 'react-native-toast-message';
 
 const NotificationScreen = () => {
   const navigation = useNavigation();
@@ -28,26 +30,92 @@ const NotificationScreen = () => {
   });
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
   const db = firebase.firestore();
+  // ... existing code ...
 
+  // Get the current user ID
+  const { currentUser } = firebase.auth();
+  const userId = currentUser ? currentUser.uid : null;
+
+  // ... existing code ...
+
+  // Add new notification with user ID
+  const handleAddNotification = async () => {
+    try {
+      if (!userId) {
+        // If there's no logged-in user, show an error message (optional)
+        Toast.show({
+          type: 'error',
+          text1: 'You must be logged in to add a notification',
+          position: 'bottom',
+        });
+        return;
+      }
+
+      // Add the user ID to the new notification data
+      const newNotificationData = {
+        ...newNotification,
+        userId: userId,
+      };
+
+      // Add the new notification to Firestore
+      const docRef = await db.collection('notifications').add(newNotificationData);
+      const notification = { id: docRef.id, ...newNotificationData };
+      setNotifications([...notifications, notification]);
+      setNewNotification({ id: '', title: '', description: '', datetime: '' });
+      setModalVisible(false);
+
+      // Show success notification
+      Toast.show({
+        type: 'success',
+        text1: 'Notification added',
+        position: 'bottom',
+      });
+    } catch (error) {
+      console.error('Error adding notification:', error);
+      // Show error notification
+      Toast.show({
+        type: 'error',
+        text1: 'Error adding notification',
+        text2: 'Please try again',
+        position: 'bottom',
+      });
+    }
+  };
 //fetch
 useEffect(() => {
   fetchNotifications();
 }, []);
 
-const fetchNotifications = async () => {
-  try {
-    const snapshot = await db.collection('notifications').get();
-    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setNotifications(data);
-  } catch (error) {
-    console.error('Error fetching notifications:', error);
-    Toast.show({
-      type: 'error',
-      text1: 'Error retrieving notification records',
-      position: 'bottom',
-    });
-  }
-};
+  // Fetch notifications for the logged-in user
+  const fetchNotifications = async () => {
+    try {
+      if (!userId) {
+        // If there's no logged-in user, show an error message (optional)
+        Toast.show({
+          type: 'error',
+          text1: 'You must be logged in to view notifications',
+          position: 'bottom',
+        });
+        return;
+      }
+
+      const snapshot = await db
+        .collection('notifications')
+        .where('userId', '==', userId) // Query notifications for the logged-in user
+        .get();
+
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setNotifications(data);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      // Show error notification
+      Toast.show({
+        type: 'error',
+        text1: 'Error retrieving notification records',
+        position: 'bottom',
+      });
+    }
+  };
 
 /*
   useEffect(() => {
@@ -67,7 +135,7 @@ const fetchNotifications = async () => {
   */
 
   //add
-  const handleAddNotification = async () => {
+/*   const handleAddNotification = async () => {
     try {
       const docRef = await db.collection('notifications').add({
         title: newNotification.title,
@@ -96,7 +164,7 @@ const fetchNotifications = async () => {
       });
     }
   };
-  
+   */
 
   
 /*
