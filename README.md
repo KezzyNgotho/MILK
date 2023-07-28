@@ -17,3 +17,7 @@ Contributions to the Farmer's Record Keeping Application are welcome! If you'd l
 The Farmer's Record Keeping Application is open-source software licensed under the MIT License. 
 
 ###### CONTACT If you have any questions, suggestions, or issues, please feel free to contact me at keziengotho18@gmail.com.com.
+
+####### Installation
+contact me for the apk  installation
+
