@@ -7,6 +7,7 @@ TouchableOpacity,
 StyleSheet,
 ScrollView,
 KeyboardAvoidingView,
+Image
 } from 'react-native';
 
 import firebase from '../components/firebase'; // Replace with the path to your firebase.js file
@@ -96,10 +97,16 @@ const handleSignUp = async () => {
 
 
 return (
-<KeyboardAvoidingView style={styles.container} >
+  <KeyboardAvoidingView style={styles.container} behavior='padding' >
+    <Image source={require('../Screens/assets/mainlogo.png')} style={styles.logo} />
+
 <ScrollView contentContainerStyle={styles.scrollViewContainer}>
 <Text style={styles.title}>Sign Up</Text>
 
+
+
+
+  
 
     <View style={styles.inputContainer}>
       <Text style={styles.label}>Farm Name</Text>
@@ -171,71 +178,78 @@ return (
   </TouchableOpacity>
   </ScrollView>
 </KeyboardAvoidingView>
+
 );
 };
 
 const styles = StyleSheet.create({
-container: {
-flex: 1,
-backgroundColor: '#fff',
-},
-nav:{
-marginTop:10,
-color:"black"
-},
-scrollViewContainer: {
-flexGrow: 1,
-alignItems: 'center',
-justifyContent: 'center',
-paddingHorizontal: 20,
-},
-title: {
-fontSize: 25,
-fontWeight: '900',
-marginBottom: 20,
-color: 'black',
-},
-inputContainer: {
-marginBottom: 10,
-width: '100%',
-},
-label: {
-fontSize: 16,
-fontWeight: 'bold',
-marginBottom: 5,
-color: 'black',
-},
-input: {
-borderWidth: 1.5,
-borderColor: 'black',
-borderRadius: 2,
-padding: 10,
-color: 'black',
-fontSize: 16,
-width: '100%',
-},
-button: {
-width: '100%',
-height: 40,
-backgroundColor: 'green',
-borderRadius: 5,
-alignItems: 'center',
-justifyContent: 'center',
-},
-buttonText: {
-color: '#fff',
-fontSize: 16,
-fontWeight: 'bold',
-},
-buttonText1: {
-  color: 'black',
-  fontSize: 16,
-  fontWeight: 'bold',
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
   },
-errorText: {
-color: 'red',
-marginBottom: 10,
-},
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: 0,
+    marginLeft:150,
+  },
+  nav: {
+    marginTop: 10,
+    color: 'black',
+  },
+  scrollViewContainer: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 25,
+    fontWeight: '900',
+    marginBottom: 20,
+    color: 'black',
+  },
+  inputContainer: {
+    marginBottom: 10,
+    width: '100%',
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: 'black',
+  },
+  input: {
+    borderWidth: 1.5,
+    borderColor: 'black',
+    borderRadius: 2,
+    padding: 10,
+    color: 'black',
+    fontSize: 16,
+    width: '100%',
+  },
+  button: {
+    width: '100%',
+    height: 40,
+    backgroundColor: 'green',
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonText1: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+  },
 });
 
 export default SignUpScreen;

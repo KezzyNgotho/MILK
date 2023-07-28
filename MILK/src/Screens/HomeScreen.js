@@ -1,14 +1,35 @@
-import React from 'react';
+import React, {useState,useEffect} from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
 import Dashboard from '../components/Dashboard';
-//import BottomTabNavigator from '../components/BottomTabNavigator';
-//import HomeScreenWithTabs from '../components/HomeScreenWithTabs';
+import firebase from '../components/firebase';
+import '@react-native-firebase/firestore';
+
 
 
 function HomeScreen() {
   const navigation = useNavigation();
+  const [farmName, setFarmName] = useState('');
+ 
+
+  useEffect(() => {
+    const fetchFarmName = async () => {
+      try {
+        const userId = firebase.auth().currentUser.uid;
+        const docRef = await firebase.firestore().collection('users').doc(userId).get();
+        if (docRef.exists) {
+          const data = docRef.data();
+          setFarmName(data.farmName);
+        }
+      } catch (error) {
+        console.error('Error fetching farm name:', error);
+      }
+    };
+
+    fetchFarmName();
+  }, []);
+
 
   return (
     <View style={styles.container}>
@@ -20,7 +41,7 @@ function HomeScreen() {
             source={require('../../src/Screens/assets/wooow.png')}
             style={styles.profileImage}
           />
-          <Text style={styles.profileName}>ZOE FARM</Text>
+         <Text style={styles.profileName}>{farmName}</Text>
         </View>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Notification')}>

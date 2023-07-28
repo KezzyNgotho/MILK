@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import firebase from '../components/firebase'; // Replace with the path to your firebase.js file
 
 const LoginScreen = ({ navigation }) => {
@@ -33,35 +27,11 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
-
- /*  const handleLogin = async () => {
-    // Check if any field is empty
-    if (email === '' || password === '') {
-      setError('Email and password are required');
-      return;
-    }
-
-    try {
-      const response = await axios.post('http://192.168.0.103:4000/login', {
-        email,
-        password,
-      });
-
-      // Handle the response as needed, e.g., save the user token in AsyncStorage and navigate to a protected screen
-      console.log(response.data);
-      navigation.navigate('Main');
-    } catch (error) {
-      if (error.response && error.response.status === 404) {
-        setError('User not found');
-      } else {
-        console.error('Failed to log in:', error);
-        setError('Failed to log in');
-      }
-    }
-  }; */
-
   return (
     <View style={styles.container}>
+      {/* Logo */}
+      <Image source={require('../Screens/assets/mainlogo.png')} style={styles.logo} />
+
       <Text style={styles.title}>Log In</Text>
 
       <View style={styles.inputContainer}>
@@ -91,9 +61,7 @@ const LoginScreen = ({ navigation }) => {
         <Text style={styles.buttonText}>Log In</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.nav}
-        onPress={() => navigation.navigate('SignUp')}>
+      <TouchableOpacity style={styles.nav} onPress={() => navigation.navigate('Signup')}>
         <Text style={styles.buttonText1}>Don't have an account? Register.</Text>
       </TouchableOpacity>
     </View>
@@ -108,6 +76,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: '#fff',
   },
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: 20,
+  },
   nav: {
     marginTop: 10,
     color: 'black',
@@ -121,7 +94,7 @@ const styles = StyleSheet.create({
     fontSize: 25,
     fontWeight: '900',
     marginBottom: 20,
-    color:"black"
+    color: 'black',
   },
   inputContainer: {
     marginBottom: 10,

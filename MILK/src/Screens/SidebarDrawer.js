@@ -59,9 +59,7 @@ function SidebarDrawer() {
       {showMilkPricesForm && <SetMilkPricesForm />}
 
       {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2023 kezzydairy. All rights reserved.</Text>
-      </View>
+     
     </View>
   );
 }
@@ -69,7 +67,7 @@ function SidebarDrawer() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
     paddingVertical: 20,
     paddingHorizontal: 10,
   },
@@ -78,6 +76,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
+    color:'black',
   },
   menuItem: {
     flexDirection: 'row',
