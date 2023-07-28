@@ -6,48 +6,47 @@ import firebase from './firebase'; // Replace with the path to your firebase.js 
 const Dashboard = () => {
   const [chartData, setChartData] = useState({ labels: [], datasets: [{ data: [] }] });
   const [error, setError] = useState(null);
-
+  const db = firebase.firestore();
+  const currentUser = firebase.auth().currentUser;
   useEffect(() => {
-    const fetchProfitLossData = () => {
-      try {
-        // Fetch profit/loss data from Firebase Realtime Database
-        const databaseRef = firebase.database().ref('profitloss');
-        databaseRef.on('value', (snapshot) => {
-          const data = snapshot.val();
-          if (data) {
-            const labels = Object.keys(data);
-            const datasets = [
-              {
-                data: Object.values(data),
-              },
-            ];
-            setChartData({ labels, datasets });
-          } else {
-            setChartData({ labels: [], datasets: [{ data: [] }] });
-          }
-        });
-      } catch (error) {
-        console.error(error);
-        setError('Failed to fetch data');
-      }
-    };
-
-    fetchProfitLossData();
-  }, []);
-
- 
-// Rest of the component code...
-
-
-  /* useEffect(() => {
     const fetchProfitLossData = async () => {
       try {
-        const response = await axios.get('http://192.168.0.103:4000/profitloss');
+        if (!currentUser) {
+          setError('No user logged in.');
+          return;
+        }
+        const userId = currentUser.uid;
+  
+        // Fetch sales data from Firestore for the logged-in user
+        const salesSnapshot = await db.collection('sales')
+          .where('userId', '==', userId)
+          .get();
+        const salesData = salesSnapshot.docs.map(doc => doc.data());
+  
+        // Calculate total sales amount
+        const totalSalesAmount = salesData.reduce((total, item) => total + item.totalAmount, 0);
+  
+        // Fetch expenses data from Firestore for the logged-in user
+        const expensesSnapshot = await db.collection('expenses')
+          .where('userId', '==', userId)
+          .get();
+        const expensesData = expensesSnapshot.docs.map(doc => doc.data());
+  
+        // Calculate total expenses amount
+        const totalExpensesAmount = expensesData.reduce((total, item) => total + item.amount, 0);
+  
+        // Calculate profit or loss
+        const profitLoss = totalSalesAmount - totalExpensesAmount;
+  
+        // Set profit or loss to be displayed on the chart
+        const chartProfitLoss = profitLoss >= 0 ? profitLoss : -profitLoss;
+  
+        // Create the chart data
         setChartData({
-          labels: response.data.map(data => data.month),
+          labels: ['Total Sales', 'Total Expenses'],
           datasets: [
             {
-              data: response.data.map(data => data.profitLoss),
+              data: [totalSalesAmount, -totalExpensesAmount], // Use negative value for expenses to make it go down on the chart
             },
           ],
         });
@@ -55,11 +54,11 @@ const Dashboard = () => {
         console.error(error);
         setError('Failed to fetch data');
       }
-    }; 
-
-     fetchProfitLossData();
-  }, []);
-  */
+    };
+  
+    fetchProfitLossData();
+  }, [currentUser, db]);
+  
   return (
     <View>
       <Text style={styles.heading}>Profit/Loss Statistics</Text>

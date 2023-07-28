@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
-import firebase from '../components/firebase'; // Import the firebase.js file
+import firebase from '../components/firebase'; 
+// Import the firebase.js file
 
 import CustomDropdown from '../components/CustomDropdown';
 const MilkScreen = () => {
@@ -20,8 +21,7 @@ const MilkScreen = () => {
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
- /*  const [timeOfDayOptions, setTimeOfDayOptions] = useState([]);
-  const [usageOptions, setUsageOptions] = useState([]); */
+  const currentUser = firebase.auth().currentUser;
   const timeOfDayOptions = [
     { label: 'Morning', value: 'morning' },
     { label: 'Afternoon', value: 'afternoon' },
@@ -66,27 +66,76 @@ const handleRecordMilk = () => {
 };
 
 // Function to record milk usage
+// Function to record milk usage
 const handleRecordUsage = () => {
   // ... Your validation code ...
-
-  db.collection('milkUsage')
   
-    .add({
-      userId: firebase.auth().currentUser.uid,
-      usage,
-      quantity,
-    })
-    .then(() => {
-      console.log('Milk usage recorded successfully');
-      setUsage('');
-      setQuantity('');
-      Alert.alert('Success', 'Milk usage recorded successfully');
-    })
-    .catch((error) => {
-      console.error(error);
-      Alert.alert('Error', 'Failed to record milk usage');
-    });
+  if (usage === 'selling') {
+    // Fetch the milk price for the logged-in user
+    db.collection('milkPrices')
+      .where('userId', '==', firebase.auth().currentUser.uid)
+      .get()
+      .then((snapshot) => {
+        if (snapshot.empty) {
+          console.log('Milk price not found for the user.');
+          Alert.alert('Error', 'Milk price not found for the user.');
+        } else {
+          // Assume there's only one document for the user's milk price
+          const milkPriceDoc = snapshot.docs[0];
+          const pricePerLiter = milkPriceDoc.data().pricePerLiter;
+
+          // Calculate the total amount for the sale
+          const totalAmount = quantity * pricePerLiter;
+
+          // Add the sale entry to the sales collection
+          db.collection('sales')
+            .add({
+              userId: firebase.auth().currentUser.uid,
+              date: new Date().toISOString(),
+              time: timeOfDay,
+              milkQuantity: quantity,
+              pricePerLiter,
+              totalAmount,
+            })
+            .then(() => {
+              console.log('Sale recorded successfully');
+              setUsage('');
+              setQuantity('');
+              Alert.alert('Success', 'Sale recorded successfully');
+            })
+            .catch((error) => {
+              console.error(error);
+              Alert.alert('Error', 'Failed to record the sale');
+            });
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        Alert.alert('Error', 'Failed to fetch milk price');
+      });
+  } else {
+    // For other types of milk usage (e.g., consumption or feedingCalves),
+    // simply add the milk usage entry as before
+    db.collection('milkUsage')
+      .add({
+        userId: firebase.auth().currentUser.uid,
+        usage,
+        quantity,
+      })
+      .then(() => {
+        console.log('Milk usage recorded successfully');
+        setUsage('');
+        setQuantity('');
+        Alert.alert('Success', 'Milk usage recorded successfully');
+      })
+      .catch((error) => {
+        console.error(error);
+        Alert.alert('Error', 'Failed to record milk usage');
+      });
+  }
 };
+
+
 
 // Function to generate milk statements
 const handleGenerateStatements = () => {

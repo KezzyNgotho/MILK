@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,23 +10,16 @@ import {
   ScrollView,
   Modal,
   Image,
+  ToastAndroid,
 } from 'react-native';
-// import Icon from 'react-native-vector-icons/FontAwesome';
-import {Picker} from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 import firebase from '../components/firebase';
-/* import 'firebase/firestore'; */
-import '@react-native-firebase/firestore'
+import '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 
-
-
-
 const CattleScreen = () => {
-
-
-
   const navigation = useNavigation();
-  
+  const currentUser = firebase.auth().currentUser;
   const [cattleList, setCattleList] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [originalList, setOriginalList] = useState([]);
@@ -35,15 +28,17 @@ const CattleScreen = () => {
     name: '',
     age: '',
     breed: '',
-    gender: '',
+    gender: 'male', // Default gender is set to 'male'
     isPregnant: false,
   });
   const db = firebase.firestore();
+  
+  const [selectedCattle, setSelectedCattle] = useState(null);
 
   useEffect(() => {
     const fetchCattleData = async () => {
       try {
-        const userId = firebase.auth().currentUser.uid;
+        const userId = currentUser.uid;
         const snapshot = await db.collection('cattles').where('userId', '==', userId).get();
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setCattleList(data);
@@ -54,38 +49,79 @@ const CattleScreen = () => {
     };
   
     fetchCattleData();
-  }, []);
-  
-  //new cattle
+  }, [currentUser.uid]);
 
-   const handleRegisterNewCattle = () => {
+  const handleRegisterNewCattle = () => {
     setShowForm(true);
+    setNewCattle({
+      name: '',
+      age: '',
+      breed: '',
+      gender: 'male',
+      isPregnant: false,
+    });
   };
+
   const handleFormSubmit = async () => {
-    const newCattleData = {
-      ...newCattle,
-      isPregnant: newCattle.isPregnant ? 'Yes' : 'No',
-      userId: firebase.auth().currentUser.uid, // Add the user's UID to the cattle data
-    };
+    const { name, age, breed, gender, isPregnant } = newCattle;
+  
+    if (gender === 'male' && isPregnant) {
+      ToastAndroid.show('Male cattle cannot be pregnant.', ToastAndroid.SHORT);
+      return;
+    }
   
     try {
-      const docRef = await db.collection('cattles').add(newCattleData);
-      const newCattle = { id: docRef.id, ...newCattleData };
-      setCattleList(prevCattleList => [...prevCattleList, newCattle]);
-      setOriginalList(prevOriginalList => [...prevOriginalList, newCattle]);
+      let newIsPregnant = isPregnant;
+      if (gender === 'male') {
+        newIsPregnant = false;
+      }
+  
+      const newCattleData = {
+        name,
+        age,
+        breed,
+        gender,
+        isPregnant: newIsPregnant,
+        userId: currentUser.uid,
+      };
+     
+      if (selectedCattle) {
+        await db.collection('cattles').doc(selectedCattle.id).update(newCattleData);
+        setCattleList(prevCattleList =>
+          prevCattleList.map(cattle =>
+            cattle.id === selectedCattle.id ? { ...cattle, ...newCattleData } : cattle
+          )
+        );
+        ToastAndroid.show('Cattle updated successfully.', ToastAndroid.SHORT);
+      } else {
+        const docRef = await db.collection('cattles').add(newCattleData);
+        const newCattle = { id: docRef.id, ...newCattleData };
+        setCattleList(prevCattleList => [...prevCattleList, newCattle]);
+        setOriginalList(prevOriginalList => [...prevOriginalList, newCattle]);
+  
+        ToastAndroid.show('New cattle registered successfully.', ToastAndroid.SHORT);
+      }
+  
       setNewCattle({
         name: '',
         age: '',
         breed: '',
-        gender: '',
+        gender: 'male',
         isPregnant: false,
       });
+      setSelectedCattle(null);
       setShowForm(false);
     } catch (error) {
-      console.error('Error registering new cattle:', error);
+      console.error('Error registering cattle:', error);
     }
   };
   
+  const handleEditCattle = (cattle) => {
+    setSelectedCattle(cattle);
+    setNewCattle(cattle);
+    setShowForm(true);
+  };
+
   const handleSearch = () => {
     const filteredCattle = originalList.filter(cattle =>
       cattle.name.toLowerCase().includes(searchText.toLowerCase()),
@@ -93,6 +129,15 @@ const CattleScreen = () => {
     setCattleList(filteredCattle);
   };
 
+  const handleDeleteCattle = async (cattleId) => {
+    try {
+      await db.collection('cattles').doc(cattleId).delete();
+      setCattleList(prevCattleList => prevCattleList.filter(cattle => cattle.id !== cattleId));
+      ToastAndroid.show('Cattle deleted successfully.', ToastAndroid.SHORT);
+    } catch (error) {
+      console.error('Error deleting cattle:', error);
+    }
+  };
   const renderCattleCard = ({item}) => (
     <View
       style={[
@@ -111,6 +156,8 @@ const CattleScreen = () => {
     source={item.gender === 'male' ? require('../../src/Screens/assets/icons8-year-of-ox-50.png') : require('../../src/Screens/assets/icons8-cattle-58.png')}
     style={styles.icon}
   />
+
+
 </View>
 
       {item.isPregnant && (
@@ -123,62 +170,38 @@ const CattleScreen = () => {
           </View>
         </View>
       )}
+
+
+<View style={styles.buttonContainer}>
+      <TouchableOpacity
+        style={styles.editButton}
+        onPress={() => handleEditCattle(item)}
+      >
+        <Text style={styles.buttonText}>Edit</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => handleDeleteCattle(item.id)}
+      >
+        <Text style={styles.buttonText}>Delete</Text>
+      </TouchableOpacity>
+    </View>
     </View>
   );
+  
+ 
 
- //delete
- const handleDeleteCattle = async (cattleId) => {
-  try {
-    await db.collection('cattles').doc(cattleId).delete();
-    setCattleList(prevCattleList => prevCattleList.filter(cattle => cattle.id !== cattleId));
-    // Optionally update originalList as well if needed.
-  } catch (error) {
-    console.error('Error deleting cattle:', error);
-  }
-};
+ 
+   // Calculate summary counts
+   const totalCattleCount = cattleList.length;
+  const pregnantCattleCount = cattleList.filter(cattle => cattle.isPregnant).length;
+  const maleCattleCount = cattleList.filter(cattle => cattle.gender === 'male').length;
+  const femaleCattleCount = cattleList.filter(cattle => cattle.gender === 'female').length;
 
-/*   const handleFormSubmit = async () => {
-    const newCattleData = {
-      ...newCattle,
-      id: Date.now(),
-    };
-
-    try {
-      const response = await axios.post(
-        'http://192.168.0.103:4000/cattle',
-        newCattleData,
-      );
-      const newCattle = response.data;
-      setCattleList(prevCattleList => [...prevCattleList, newCattle]);
-      setOriginalList(prevOriginalList => [...prevOriginalList, newCattle]);
-      setNewCattle({
-        name: '',
-        age: '',
-        breed: '',
-        gender: '',
-        isPregnant: false,
-      });
-      setShowForm(false);
-    } catch (error) {
-      console.error('Error registering new cattle:', error);
-    }
-  }; */
-
-  // Calculate summary counts
-  const totalCattleCount = cattleList.length;
-  const pregnantCattleCount = cattleList.filter(
-    cattle => cattle.isPregnant,
-  ).length;
-  const maleCattleCount = cattleList.filter(
-    cattle => cattle.gender === 'male',
-  ).length;
-  const femaleCattleCount = cattleList.filter(
-    cattle => cattle.gender === 'female',
-  ).length;
-  //back
   const handleGoBack = () => {
     navigation.goBack();
-  };
+  }
+   
 
 
   return (
@@ -230,6 +253,7 @@ const CattleScreen = () => {
         </TouchableOpacity>
 
         <Modal visible={showForm} onRequestClose={() => setShowForm(false)}>
+          
        
         
           <View style={styles.form}>
@@ -261,14 +285,13 @@ const CattleScreen = () => {
             </Picker>
             <Text style={styles.formLabel}>Gender:</Text>
             <Picker
-              style={styles.formInput}
-              selectedValue={newCattle.gender}
-              onValueChange={value =>
-                setNewCattle({...newCattle, gender: value})
-              }>
-              <Picker.Item label="Male" value="male" />
-              <Picker.Item label="Female" value="female" />
-            </Picker>
+            style={styles.formInput}
+            selectedValue={newCattle.gender}
+            onValueChange={value => setNewCattle({ ...newCattle, gender: value })}
+          >
+            <Picker.Item label="Male" value="male" />
+            <Picker.Item label="Female" value="female" />
+          </Picker>
             <View style={styles.formCheckboxContainer}>
               <TouchableOpacity
                 style={styles.formCheckbox}
@@ -299,11 +322,17 @@ const CattleScreen = () => {
             </View>
        
             <TouchableOpacity
-              style={styles.formSubmitButton}
-              onPress={handleFormSubmit}>
-              <Text style={styles.formSubmitButtonText}>Submit</Text>
-            </TouchableOpacity>
+          style={styles.formSubmitButton}
+          onPress={handleFormSubmit}
+        >
+          <Text style={styles.formSubmitButtonText}>
+            {selectedCattle ? 'Update' : 'Submit'}
+          </Text>
+        </TouchableOpacity>
           </View>
+
+         
+  
         </Modal>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Cattle Summary</Text>
@@ -509,6 +538,36 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 5,
     backgroundColor: '#CEF3CE',
+  },
+
+
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  editButton: {
+    backgroundColor: '#000000',
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginRight: 1,
+  },
+  deleteButton: {
+    backgroundColor: 'red',
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginRight:100,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 export default CattleScreen;

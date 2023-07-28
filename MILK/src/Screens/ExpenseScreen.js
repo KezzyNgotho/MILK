@@ -27,98 +27,72 @@ const ExpenseScreen = () => {
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const db = firebase.firestore();
-//fetch
-useEffect(() => {
-  fetchExpenses();
-}, []);
+  const currentUser = firebase.auth().currentUser; // Get the current logged-in user
 
-const fetchExpenses = async () => {
-  try {
-    const user = firebase.auth().currentUser;
-    if (user) {
-      const snapshot = await db
-        .collection('expenses')
-        .where('userId', '==', user.uid)
-        .get();
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setExpenses(data);
-    }
-  } catch (error) {
-    // Handle error
-    console.error('Error fetching expenses:', error);
-    Toast.show({
-      type: 'error',
-      text1: 'Error retrieving expense records',
-      position: 'bottom',
-    });
-  }
-};
-
-
-
-/*
+  //fetch
   useEffect(() => {
     fetchExpenses();
   }, []);
 
-  const fetchExpenses = () => {
-    axios
-      .get('http://192.168.0.103:4000/expenses')
-      .then((response) => {
-        setExpenses(response.data);
-        calculateTotalExpenses(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-        Toast.show({
-          type: 'error',
-          text1: 'Error retrieving expense records',
-          position: 'bottom',
-        });
+  const fetchExpenses = async () => {
+    try {
+      if (currentUser) { // Check if currentUser exists
+        const snapshot = await db
+          .collection('expenses')
+          .where('userId', '==', currentUser.uid) // Use currentUser.uid
+          .get();
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setExpenses(data);
+      }
+    } catch (error) {
+      // Handle error
+      console.error('Error fetching expenses:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error retrieving expense records',
+        position: 'bottom',
       });
-  }; */
+    }
+  };
 
- /*  const calculateTotalExpenses = (expenses) => {
-    const total = expenses.reduce((total, expense) => total + parseFloat(expense.amount), 0);
-    setTotalExpenses(total);
-  }; */
-
-
-
-  /* const handleAddExpense = () => {
+  //add expense
+  const handleAddExpense = () => {
     if (newExpense.description && newExpense.amount && newExpense.date) {
-      const expenseData = {
-        description: newExpense.description,
-        amount: newExpense.amount,
-        date: newExpense.date.toISOString(), // Convert date to ISO string format
-      };
-  
-      // Send POST request to save the expense
-      
-      axios.post('http://192.168.0.103:4000/expenses', expenseData)
-        .then(response => {
-          // Handle successful response
-          setExpenses([...expenses, newExpense]);
-          setNewExpense({ description: '', amount: '', date: new Date() }); // Reset date to default
-  
-          // Show success notification
-          Toast.show({
-            type: 'success',
-            text1: 'Expense recorded',
-            position: 'bottom',
+      if (currentUser) { // Check if currentUser exists
+        const expenseData = {
+          description: newExpense.description,
+          amount: newExpense.amount,
+          date: newExpense.date.toISOString(),
+          userId: currentUser.uid, // Associate the expense with the logged-in user's UID
+        };
+
+        db.collection('expenses')
+          .add(expenseData)
+          .then(docRef => {
+            // Handle successful response
+            const newExpense = { id: docRef.id, ...expenseData };
+            setExpenses([...expenses, newExpense]);
+            setNewExpense({ description: '', amount: '', date: new Date() });
+
+            // Show success notification
+            Toast.show({
+              type: 'success',
+              text1: 'Expense recorded',
+              position: 'bottom',
+            });
+          })
+          .catch(error => {
+            // Handle error
+            console.error('Error saving expense:', error);
+            // Show error notification
+            Toast.show({
+              type: 'error',
+              text1: 'Error saving expense',
+              text2: 'Please try again',
+              position: 'bottom',
+            });
           });
-        })
-        .catch(error => {
-          // Handle error
-          console.error(error);
-          // Show error notification
-          Toast.show({
-            type: 'error',
-            text1: 'Error saving expense',
-            text2: 'Please try again',
-            position: 'bottom',
-          });
-        });
+      }
     } else {
       // Show error notification if any field is missing
       Toast.show({
@@ -128,58 +102,7 @@ const fetchExpenses = async () => {
         position: 'bottom',
       });
     }
-  }; */
-  
-//add expese  
-const handleAddExpense = () => {
-  if (newExpense.description && newExpense.amount && newExpense.date) {
-    const user = firebase.auth().currentUser;
-    if (user) {
-      const expenseData = {
-        description: newExpense.description,
-        amount: newExpense.amount,
-        date: newExpense.date.toISOString(),
-        userId: user.uid, // Associate the expense with the logged-in user's UID
-      };
-
-      db.collection('expenses')
-        .add(expenseData)
-        .then(docRef => {
-          // Handle successful response
-          const newExpense = { id: docRef.id, ...expenseData };
-          setExpenses([...expenses, newExpense]);
-          setNewExpense({ description: '', amount: '', date: new Date() });
-
-          // Show success notification
-          Toast.show({
-            type: 'success',
-            text1: 'Expense recorded',
-            position: 'bottom',
-          });
-        })
-        .catch(error => {
-          // Handle error
-          console.error('Error saving expense:', error);
-          // Show error notification
-          Toast.show({
-            type: 'error',
-            text1: 'Error saving expense',
-            text2: 'Please try again',
-            position: 'bottom',
-          });
-        });
-    }
-  } else {
-    // Show error notification if any field is missing
-    Toast.show({
-      type: 'error',
-      text1: 'Missing fields',
-      text2: 'Please fill in all the fields',
-      position: 'bottom',
-    });
-  }
-};
-
+  };
 
 
   const handleGenerateStatement = () => {
